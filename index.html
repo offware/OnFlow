@@ -65,7 +65,7 @@
         #animatedParagraph {
             opacity: 0; 
             transform-style: preserve-3d; 
-            transform: rotateX(-90deg); /* CHANGED: Start "face up, back on ground" */
+            transform: rotateX(90deg); /* Start "face up, back on ground" */
         }
         .logo { transform-origin: center center; } /* Logo rotates around its center */
         .header-quote { transform-origin: center bottom; } /* Header quote pivots from its bottom edge */
@@ -75,7 +75,7 @@
             /* 'from' state is implicitly the element's current style (opacity:0, rotateX(90deg)) */
             to { 
                 opacity: 1; 
-                transform: rotateX(0deg); 
+                transform: rotateX(0deg); /* Corrected to 0deg for upright position */
             }
         }
         .perform-block-appear {
@@ -93,7 +93,7 @@
 
         #animatedParagraph p { 
             min-height: 1.8em; 
-            line-height: 2; /* Using the last set value */
+            line-height: 2.5; /* Using the last set value from previous interaction */
         }
         #animatedParagraph p span.letter-hover {
             display: inline-block;
@@ -158,8 +158,7 @@
             </header>
 
             <main class="w-full my-10 sm:my-12 flex-grow flex flex-col justify-center items-center pt-16 sm:pt-20"> 
-                <div id="animatedParagraph" class="text-left max-w-2xl w-full">
-                    </div>
+                <div id="animatedParagraph" class="text-left max-w-3xl w-full"> </div>
             </main>
 
             <footer class="w-full mt-auto mb-4 absolute bottom-0 left-0 right-0 pb-4 sm:pb-6 md:pb-8 z-10">
@@ -497,7 +496,6 @@
             window.addEventListener('resize', handleResize); 
         });
     </script>
-
 
 </body>
 </html>
