@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celestial Interface Concept</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            overflow-x: hidden; 
+            /* bg-black is applied via Tailwind class on body */
+        }
+
+        #backgroundGraph {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1; 
+            pointer-events: none; 
+            transform: translateZ(-500px); 
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { 
+            animation: fadeIn 0.8s ease-out forwards; 
+            perspective: 800px; 
+            perspective-origin: center center;
+            transform-style: preserve-3d;
+        }
+
+        .header-quote p { font-size: 0.8rem; line-height: 1.4; }
+        @media (min-width: 640px) { .header-quote p { font-size: 0.875rem; } }
+        .header-quote a { font-size: 0.8rem; position: relative; display: inline-block; }
+        @media (min-width: 640px) { .header-quote a { font-size: 0.875rem; } }
+        
+        .know-more-link::after {
+            content: ''; position: absolute; width: 100%; height: 1px;
+            bottom: -3px; left: 0; background-color: currentColor;
+            transform: scaleX(0); transform-origin: bottom left;
+            animation: underlineAnimation 2.5s infinite ease-in-out;
+        }
+        @keyframes underlineAnimation {
+            0% { transform: scaleX(0); transform-origin: bottom left; }
+            45% { transform: scaleX(1); transform-origin: bottom left; }
+            55% { transform: scaleX(1); transform-origin: bottom right; }
+            100% { transform: scaleX(0); transform-origin: bottom right; }
+        }
+
+        /* Initial state for elements that will be animated */
+        .logo, 
+        .header-quote,
+        #animatedParagraph {
+            opacity: 0; 
+            transform-style: preserve-3d; 
+            transform: rotateX(-90deg); /* CHANGED: Start "face up, back on ground" */
+        }
+        .logo { transform-origin: center center; } /* Logo rotates around its center */
+        .header-quote { transform-origin: center bottom; } /* Header quote pivots from its bottom edge */
+        #animatedParagraph { transform-origin: center bottom; } /* Paragraph pivots from its bottom edge */
+        
+        @keyframes blockAppearAnimation {
+            /* 'from' state is implicitly the element's current style (opacity:0, rotateX(90deg)) */
+            to { 
+                opacity: 1; 
+                transform: rotateX(0deg); 
+            }
+        }
+        .perform-block-appear {
+            animation: blockAppearAnimation 3.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
+        }
+        
+        /* Class for instant appearance if 90deg animation is off */
+        .logo.instant-appear,
+        .header-quote.instant-appear,
+        #animatedParagraph.instant-appear {
+            opacity: 1;
+            transform: rotateX(0deg);
+            animation: none; /* Ensure no animation is applied or running */
+        }
+
+        #animatedParagraph p { 
+            min-height: 1.8em; 
+            line-height: 2; /* Using the last set value */
+        }
+        #animatedParagraph p span.letter-hover {
+            display: inline-block;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.3s ease-out;
+            cursor: default; 
+        }
+
+        /* Toggle Button Styles */
+        #toggleControls {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 1000; 
+        }
+        .toggle-button {
+            background-color: rgba(55, 65, 81, 0.7); 
+            color: white;
+            border: 1px solid rgba(75, 85, 99, 0.7); 
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem; 
+            font-size: 0.75rem; 
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            backdrop-filter: blur(5px); 
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .toggle-button:hover {
+            background-color: rgba(75, 85, 99, 0.8); 
+        }
+        .toggle-button.active {
+            background-color: rgba(34, 197, 94, 0.7); 
+            border-color: rgba(22, 163, 74, 0.7); 
+        }
+        .toggle-button.active:hover {
+            background-color: rgba(22, 163, 74, 0.8);
+        }
+
+    </style>
+</head>
+
+<body class="bg-black text-neutral-200 antialiased selection:bg-neutral-700">
+
+    <canvas id="backgroundGraph"></canvas> 
+
+    <div class="flex flex-col items-center justify-between min-h-screen p-4 sm:p-6 md:p-8">
+        
+        <div class="animate-fade-in w-full text-center flex flex-col flex-grow justify-center"> 
+            
+            <header class="flex justify-between items-start w-full mb-6 sm:mb-8 px-2 absolute top-0 left-0 right-0 pt-4 sm:pt-6 md:pt-8 z-10">
+                <div class="logo text-3xl sm:text-4xl font-bold text-white cursor-default">O</div>
+                <div class="header-quote text-right">
+                    <p class="text-neutral-400 italic">
+                        "The cosmos is within us. <br>We are made of star-stuff."
+                    </p>
+                    <a href="#" class="know-more-link text-neutral-300 hover:text-white active:text-neutral-400 transition-colors duration-300 mt-1">
+                        Know more
+                    </a>
+                </div>
+            </header>
+
+            <main class="w-full my-10 sm:my-12 flex-grow flex flex-col justify-center items-center pt-16 sm:pt-20"> 
+                <div id="animatedParagraph" class="text-left max-w-2xl w-full">
+                    </div>
+            </main>
+
+            <footer class="w-full mt-auto mb-4 absolute bottom-0 left-0 right-0 pb-4 sm:pb-6 md:pb-8 z-10">
+                <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+                    </div>
+            </footer>
+        </div>
+    </div>
+
+    <div id="toggleControls">
+        <button id="toggleEnergy" class="toggle-button">Energy: ON</button>
+        <button id="toggleLines" class="toggle-button">Lines: ON</button>
+        <button id="toggle90Anim" class="toggle-button">90° Anim: ON</button>
+    </div>
+
+    <script>
+        const paragraphContainer = document.getElementById('animatedParagraph');
+        const singleParagraphContent = 
+            "In the vast expanse of the cosmos, where silence sings and shadows dance, " +
+            "ideas shimmer like distant stars, each a nascent sun, a universe of pure potential. " +
+            "Every thought, a delicate nebula, swirls with colors unseen, a universe to explore. " +
+            "Unveiling clarity from the silent, echoing void, a beacon in the velvet night. " +
+            "Design is the architect, the celestial cartographer, the weaver of starlight dreams, " +
+            "charting courses through infinite seas of possibility, towards horizons yet unknown.";
+        
+        // --- Feature Toggle States ---
+        let showEnergyPassing = true;
+        let showBackgroundLines = true;
+        let enable90DegAnimation = true;
+
+        // --- Background Canvas Variables and Functions ---
+        let canvas, ctx;
+        const numLines = Math.floor(Math.random() * 3) + 6; 
+        let lineObjects = []; 
+        let animationFrameId; 
+
+        class AnimatedLine {
+            constructor() {
+                this.oscillationSpeed = (Math.random() * 0.002) + 0.0005; 
+                this.oscillationRange = (Math.random() * 5) + 2;    
+                this.oscillationOffset = Math.random() * Math.PI * 2; 
+                this.sx = 0; this.sy = 0; this.ex = 0; this.ey = 0;
+                this.initialCp1x = 0; this.initialCp1y = 0; 
+                this.initialCp2x = 0; this.initialCp2y = 0;
+                this.cp1x = 0; this.cp1y = 0; this.cp2x = 0; this.cp2y = 0;
+                this.pathPoints = [];
+                this.numPathPoints = 80; 
+                this.lightPosition = Math.random() * this.numPathPoints; 
+                this.lightSpeed = 0.15 + Math.random() * 0.20; 
+                this.lightLength = 12 + Math.floor(Math.random() * 8); 
+                this.initLineShape();
+            }
+
+            initLineShape() {
+                if (!canvas) return; 
+                const edge = Math.floor(Math.random() * 4);
+                if (edge === 0) { this.sx = Math.random() * canvas.width; this.sy = -10; } 
+                else if (edge === 1) { this.sx = canvas.width + 10; this.sy = Math.random() * canvas.height; } 
+                else if (edge === 2) { this.sx = Math.random() * canvas.width; this.sy = canvas.height + 10; } 
+                else { this.sx = -10; this.sy = Math.random() * canvas.height; } 
+
+                let endEdge = (edge + 1 + Math.floor(Math.random() * 2)) % 4; 
+                if (endEdge === 0) { this.ex = Math.random() * canvas.width; this.ey = -10; }
+                else if (endEdge === 1) { this.ex = canvas.width + 10; this.ey = Math.random() * canvas.height; }
+                else if (endEdge === 2) { this.ex = Math.random() * canvas.width; this.ey = canvas.height + 10; }
+                else { this.ex = -10; this.ey = Math.random() * canvas.height; }
+
+                const midX = (this.sx + this.ex) / 2;
+                const midY = (this.sy + this.ey) / 2;
+                const spread = Math.max(canvas.width, canvas.height) * (0.3 + Math.random() * 0.4);
+
+                this.initialCp1x = midX + (Math.random() - 0.5) * spread;
+                this.initialCp1y = midY + (Math.random() - 0.5) * spread;
+                this.initialCp2x = midX + (Math.random() - 0.5) * spread;
+                this.initialCp2y = midY + (Math.random() - 0.5) * spread;
+            }
+            
+            getBezierPoint(t, p0, p1, p2, p3) {
+                const tInv = 1 - t;
+                const tInv2 = tInv * tInv;
+                const tInv3 = tInv2 * tInv;
+                const t2 = t * t;
+                const t3 = t2 * t;
+                const x = tInv3 * p0.x + 3 * tInv2 * t * p1.x + 3 * tInv * t2 * p2.x + t3 * p3.x;
+                const y = tInv3 * p0.y + 3 * tInv2 * t * p1.y + 3 * tInv * t2 * p2.y + t3 * p3.y;
+                return { x, y };
+            }
+
+            calculateCurrentPathPoints() {
+                this.pathPoints = [];
+                const p0 = { x: this.sx, y: this.sy };
+                const p1 = { x: this.cp1x, y: this.cp1y }; 
+                const p2 = { x: this.cp2x, y: this.cp2y };
+                const p3 = { x: this.ex, y: this.ey };
+
+                for (let i = 0; i <= this.numPathPoints; i++) {
+                    const t = i / this.numPathPoints;
+                    this.pathPoints.push(this.getBezierPoint(t, p0, p1, p2, p3));
+                }
+            }
+
+            update(time) {
+                const oscillation = Math.sin(time * this.oscillationSpeed + this.oscillationOffset) * this.oscillationRange;
+                this.cp1x = this.initialCp1x + oscillation;
+                this.cp1y = this.initialCp1y - oscillation; 
+                this.cp2x = this.initialCp2x - oscillation;
+                this.cp2y = this.initialCp2y + oscillation;
+
+                this.calculateCurrentPathPoints();
+
+                this.lightPosition += this.lightSpeed;
+                if (this.lightPosition >= this.pathPoints.length) {
+                    this.lightPosition = 0; 
+                }
+            }
+
+            draw(context) {
+                if (!showBackgroundLines) return; 
+
+                context.beginPath();
+                context.moveTo(this.sx, this.sy);
+                context.bezierCurveTo(this.cp1x, this.cp1y, this.cp2x, this.cp2y, this.ex, this.ey);
+                context.strokeStyle = 'rgba(200, 200, 220, 0.60)'; 
+                context.lineWidth = 0.3;
+                context.stroke();
+
+                if (!showEnergyPassing || this.pathPoints.length < 2) return; 
+
+                const headIndex = Math.floor(this.lightPosition);
+                const actualLightLength = Math.min(this.lightLength, this.pathPoints.length -1);
+
+                for (let i = 0; i < actualLightLength; i++) {
+                    const startIndex = headIndex - i;
+                    const endIndex = headIndex - i - 1; 
+
+                    if (startIndex >= 0 && endIndex >= 0 &&
+                        startIndex < this.pathPoints.length && endIndex < this.pathPoints.length) {
+                        
+                        const pStart = this.pathPoints[startIndex];
+                        const pEnd = this.pathPoints[endIndex];
+
+                        const segmentProgress = i / actualLightLength; 
+                        const brightness = 1 - (segmentProgress * segmentProgress); 
+                        const opacity = Math.max(0, 0.85 * brightness); 
+
+                        context.shadowBlur = 4 + (brightness * 6); 
+                        context.shadowColor = `rgba(220, 220, 255, ${opacity * 0.4})`; 
+
+                        context.beginPath();
+                        context.moveTo(pStart.x, pStart.y);
+                        context.lineTo(pEnd.x, pEnd.y);
+                        context.strokeStyle = `rgba(230, 230, 255, ${opacity})`; 
+                        context.lineWidth = 1.0; 
+                        context.lineCap = 'round';
+                        context.stroke();
+
+                        context.shadowBlur = 0;
+                        context.shadowColor = 'transparent';
+                    }
+                }
+            }
+        }
+
+        function initializeLines() {
+            lineObjects = [];
+            for (let i = 0; i < numLines; i++) {
+                lineObjects.push(new AnimatedLine());
+            }
+        }
+        
+        function setupBackgroundCanvas() {
+            canvas = document.getElementById('backgroundGraph');
+            if (!canvas) {
+                console.error("Background canvas #backgroundGraph not found!");
+                return false;
+            }
+            ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initializeLines(); 
+            return true;
+        }
+
+        function animateBackground(currentTime) {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+
+            if (showBackgroundLines) { 
+                lineObjects.forEach(line => line.update(currentTime));
+                lineObjects.forEach(line => line.draw(ctx)); 
+            }
+            animationFrameId = requestAnimationFrame(animateBackground);
+        }
+
+        function handleResize() {
+            if (setupBackgroundCanvas()) { 
+            }
+        }
+
+        function initializeParagraphContent() {
+            if (!paragraphContainer) {
+                console.error("Paragraph container #animatedParagraph not found!");
+                return;
+            }
+            paragraphContainer.innerHTML = ''; 
+
+            const pElement = document.createElement('p');
+            pElement.className = 'text-base sm:text-lg md:text-xl lg:text-2xl text-neutral-300 tracking-wide'; 
+            pElement.textContent = singleParagraphContent; 
+            paragraphContainer.appendChild(pElement);
+            
+            makeParagraphInteractive();
+        }
+
+        function makeParagraphInteractive() {
+            if (!paragraphContainer) return;
+
+            const paragraphElements = paragraphContainer.querySelectorAll('p'); 
+            paragraphElements.forEach(p => {
+                const text = p.textContent;
+                p.innerHTML = ''; 
+                
+                for (let char of text) {
+                    const span = document.createElement('span');
+                    span.textContent = char;
+                    span.className = 'letter-hover';
+                    
+                    if (char === ' ') { 
+                        span.innerHTML = '&nbsp;';
+                    }
+                    
+                    span.addEventListener('mouseover', () => {
+                        const randomY = Math.random() * 16 - 8; 
+                        const randomRot = Math.random() * 30 - 15; 
+                        const scaleEffect = 1.35; 
+                        span.style.transform = `translateY(${randomY - 12}px) scale(${scaleEffect}) rotate(${randomRot}deg)`;
+                        span.style.color = '#FFFFFF'; 
+                    });
+                    
+                    span.addEventListener('mouseout', () => {
+                        span.style.transform = 'translateY(0) scale(1) rotate(0deg)';
+                        span.style.color = ''; 
+                    });
+                    p.appendChild(span);
+                }
+            });
+        }
+
+        function startPageAnimations() {
+            const logo = document.querySelector('.logo');
+            const headerQuoteDiv = document.querySelector('.header-quote'); 
+            const animatedParagraphDiv = document.getElementById('animatedParagraph'); 
+
+            const animationTargets = [
+                { element: logo, delay: 800 }, 
+                { element: headerQuoteDiv, delay: 1000 }, 
+                { element: animatedParagraphDiv, delay: 1300 } 
+            ];
+
+            animationTargets.forEach(target => {
+                if (target.element) {
+                    target.element.classList.remove('perform-block-appear', 'instant-appear');
+                    
+                    if (enable90DegAnimation) {
+                        target.element.style.opacity = '0'; 
+                        void target.element.offsetWidth; 
+
+                        setTimeout(() => {
+                            target.element.style.opacity = ''; 
+                            target.element.classList.add('perform-block-appear');
+                        }, target.delay);
+                    } else {
+                        target.element.style.opacity = ''; 
+                        target.element.classList.add('instant-appear');
+                    }
+                } else {
+                    console.warn("An element for animation was not found.", target);
+                }
+            });
+        }
+
+        function setupToggles() {
+            const toggleEnergyBtn = document.getElementById('toggleEnergy');
+            const toggleLinesBtn = document.getElementById('toggleLines');
+            const toggle90AnimBtn = document.getElementById('toggle90Anim');
+
+            function updateButton(button, state, onText, offText) {
+                if (!button) return; 
+                button.textContent = state ? onText : offText;
+                if (state) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            }
+
+            updateButton(toggleEnergyBtn, showEnergyPassing, "Energy: ON", "Energy: OFF");
+            updateButton(toggleLinesBtn, showBackgroundLines, "Lines: ON", "Lines: OFF");
+            updateButton(toggle90AnimBtn, enable90DegAnimation, "90° Anim: ON", "90° Anim: OFF");
+
+            if (toggleEnergyBtn) {
+                toggleEnergyBtn.addEventListener('click', () => {
+                    showEnergyPassing = !showEnergyPassing;
+                    updateButton(toggleEnergyBtn, showEnergyPassing, "Energy: ON", "Energy: OFF");
+                });
+            }
+
+            if (toggleLinesBtn) {
+                toggleLinesBtn.addEventListener('click', () => {
+                    showBackgroundLines = !showBackgroundLines;
+                    updateButton(toggleLinesBtn, showBackgroundLines, "Lines: ON", "Lines: OFF");
+                });
+            }
+
+            if (toggle90AnimBtn) {
+                toggle90AnimBtn.addEventListener('click', () => {
+                    enable90DegAnimation = !enable90DegAnimation;
+                    updateButton(toggle90AnimBtn, enable90DegAnimation, "90° Anim: ON", "90° Anim: OFF");
+                    startPageAnimations(); 
+                });
+            }
+        }
+
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (setupBackgroundCanvas()) { 
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+                animationFrameId = requestAnimationFrame(animateBackground); 
+            }
+            initializeParagraphContent(); 
+            startPageAnimations(); 
+            setupToggles(); 
+            window.addEventListener('resize', handleResize); 
+        });
+    </script>
+
+
+</body>
+</html>
